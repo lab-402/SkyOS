@@ -10,7 +10,7 @@
 volatile uint32_t _pitTicks = 0;
 DWORD _lastTickCount = 0;
 
-//Å¸ÀÌ¸Ó ÀÎÅÍ·´Æ® ÇÚµé·¯
+//íƒ€ì´ë¨¸ ì¸í„°ëŸ½íŠ¸ í•¸ë“¤ëŸ¬
 __declspec(naked) void InterruptPITHandler() 
 {	
 	_asm {
@@ -21,15 +21,24 @@ __declspec(naked) void InterruptPITHandler()
 	_pitTicks++;
 	
 	_asm {
-		mov al, 0x20
+		mov al, 0x20 
 		out 0x20, al
 		popad
 		sti
 		iretd
 	}
+	//cli: clear interrupt(stop interrupt)
+	//pushad: Stores all register values in the stack
+	//mov: copy right to left. mov A, B -> B to A move data
+	//out: port output
+	//popad: pop all general purpose registers
+	//sti: Set interrupt(Start interrupt)
+	//iretd: return interrupt to task
+	//AL: the lower 16 bits of EAX register (EAX : General purpose register)
+	//https://www.tutorialspoint.com/assembly_programming/assembly_registers.htm
 }
 
-//Å¸ÀÌ¸Ó¸¦ ½ÃÀÛ
+//íƒ€ì´ë¨¸ë¥¼ ì‹œì‘
 void StartPITCounter(uint32_t freq, uint8_t counter, uint8_t mode) {
 
 	if (freq == 0)
@@ -37,22 +46,22 @@ void StartPITCounter(uint32_t freq, uint8_t counter, uint8_t mode) {
 
 	uint16_t divisor = uint16_t(1193181 / (uint16_t)freq);
 
-	//Ä¿¸Çµå Àü¼Û
+	//ì»¤ë§¨ë“œ ì „ì†¡
 	uint8_t ocw = 0;
 	ocw = (ocw & ~I86_PIT_OCW_MASK_MODE) | mode;
 	ocw = (ocw & ~I86_PIT_OCW_MASK_RL) | I86_PIT_OCW_RL_DATA;
 	ocw = (ocw & ~I86_PIT_OCW_MASK_COUNTER) | counter;
 	SendPITCommand(ocw);
 
-	//ÇÁ¸®Äö½Ã ºñÀ² ¼³Á¤
+	//í”„ë¦¬í€€ì‹œ ë¹„ìœ¨ ì„¤ì •
 	SendPITData(divisor & 0xff, 0);
 	SendPITData((divisor >> 8) & 0xff, 0);
 
-	//Å¸ÀÌ¸Ó Æ½ Ä«¿îÆ® ¸®¼Â
+	//íƒ€ì´ë¨¸ í‹± ì¹´ìš´íŠ¸ ë¦¬ì…‹
 	_pitTicks = 0;
 }
 
-//PIT ÃÊ±âÈ­
+//PIT ì´ˆê¸°í™”
 void InitializePIT()
 {
 	setvect(32, InterruptPITHandler);

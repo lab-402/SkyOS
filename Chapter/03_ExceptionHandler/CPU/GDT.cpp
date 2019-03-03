@@ -31,6 +31,7 @@ static struct gdt_descriptor	_gdt [MAX_DESCRIPTORS];
 static struct gdtr				_gdtr;
 
 //! install gdtr
+//lgdt : Load GDT register
 static void InstallGDT () {
 #ifdef _MSC_VER
 	_asm lgdt [_gdtr]
@@ -68,43 +69,44 @@ gdt_descriptor* i86_gdt_get_descriptor (int i) {
 	return &_gdt[i];
 }
 
-//GDT ÃÊ±âÈ­ ¹× GDTR ·¹Áö½ºÅÍ¿¡ GDT ·Îµå
+//GDT ì´ˆê¸°í™” ë° GDTR ë ˆì§€ìŠ¤í„°ì— GDT ë¡œë“œ
+//p.116~p.119 ì°¸ì¡°
 int GDTInitialize()
 {
-	//GDTR ·¹Áö½ºÅÍ¿¡ ·ÎµåµÉ _gdtr ±¸Á¶Ã¼ÀÇ °ª ÃÊ±âÈ­
-	//_gdtr ±¸Á¶Ã¼ÀÇ ÁÖ¼Ò´Â ÆäÀÌÂ¡ Àü´Ü°èÀÌ¸ç ½ÇÁ¦ ¹°¸®ÁÖ¼Ò¿¡ ÇØ´ç º¯¼ö°¡ ÇÒ´çµÇ¾î ÀÖ´Ù.
-	//µð½ºÅ©¸³ÅÍÀÇ ¼ö¸¦ ³ªÅ¸³»´Â MAX_DESCRIPTORSÀÇ °ªÀº 5ÀÌ´Ù.
-	//NULL µð½ºÅ©¸³ÅÍ, Ä¿³Î ÄÚµå µð½ºÅ©¸³ÅÍ, Ä¿³Î µ¥ÀÌÅÍ µð½ºÅ©¸³ÅÍ, À¯Àú ÄÚµå µð½ºÅ©¸³ÅÍ
-	//À¯Àú µ¥ÀÌÅÍ µð½ºÅ©¸³ÅÍ ÀÌ·¸°Ô ÃÑ 5°³ÀÌ´Ù.
-	//µð½ºÅ©¸³ÅÍ´ç 6¹ÙÀÌÆ®ÀÌ¹Ç·Î GDTÀÇ Å©±â´Â 30¹ÙÀÌÆ®´Ù.
+	//GDTR ë ˆì§€ìŠ¤í„°ì— ë¡œë“œë  _gdtr êµ¬ì¡°ì²´ì˜ ê°’ ì´ˆê¸°í™”
+	//_gdtr êµ¬ì¡°ì²´ì˜ ì£¼ì†ŒëŠ” íŽ˜ì´ì§• ì „ë‹¨ê³„ì´ë©° ì‹¤ì œ ë¬¼ë¦¬ì£¼ì†Œì— í•´ë‹¹ ë³€ìˆ˜ê°€ í• ë‹¹ë˜ì–´ ìžˆë‹¤.
+	//ë””ìŠ¤í¬ë¦½í„°ì˜ ìˆ˜ë¥¼ ë‚˜íƒ€ë‚´ëŠ” MAX_DESCRIPTORSì˜ ê°’ì€ 5ì´ë‹¤.
+	//NULL ë””ìŠ¤í¬ë¦½í„°, ì»¤ë„ ì½”ë“œ ë””ìŠ¤í¬ë¦½í„°, ì»¤ë„ ë°ì´í„° ë””ìŠ¤í¬ë¦½í„°, ìœ ì € ì½”ë“œ ë””ìŠ¤í¬ë¦½í„°
+	//ìœ ì € ë°ì´í„° ë””ìŠ¤í¬ë¦½í„° ì´ë ‡ê²Œ ì´ 5ê°œì´ë‹¤.
+	//ë””ìŠ¤í¬ë¦½í„°ë‹¹ 6ë°”ì´íŠ¸ì´ë¯€ë¡œ GDTì˜ í¬ê¸°ëŠ” 30ë°”ì´íŠ¸ë‹¤.
 	_gdtr.m_limit = (sizeof(struct gdt_descriptor) * MAX_DESCRIPTORS) - 1;
 	_gdtr.m_base = (uint32_t)&_gdt[0];
 
-	//NULL µð½ºÅ©¸³ÅÍÀÇ ¼³Á¤
+	//NULL ë””ìŠ¤í¬ë¦½í„°ì˜ ì„¤ì •
 	gdt_set_descriptor(0, 0, 0, 0, 0);
 
-	//Ä¿³Î ÄÚµå µð½ºÅ©¸³ÅÍÀÇ ¼³Á¤
+	//ì»¤ë„ ì½”ë“œ ë””ìŠ¤í¬ë¦½í„°ì˜ ì„¤ì •
 	gdt_set_descriptor(1, 0, 0xffffffff,
 		I86_GDT_DESC_READWRITE | I86_GDT_DESC_EXEC_CODE | I86_GDT_DESC_CODEDATA |
 		I86_GDT_DESC_MEMORY, I86_GDT_GRAND_4K | I86_GDT_GRAND_32BIT |
 		I86_GDT_GRAND_LIMITHI_MASK);
 
-	//Ä¿³Î µ¥ÀÌÅÍ µð½ºÅ©¸³ÅÍÀÇ ¼³Á¤
+	//ì»¤ë„ ë°ì´í„° ë””ìŠ¤í¬ë¦½í„°ì˜ ì„¤ì •
 	gdt_set_descriptor(2, 0, 0xffffffff,
 		I86_GDT_DESC_READWRITE | I86_GDT_DESC_CODEDATA | I86_GDT_DESC_MEMORY,
 		I86_GDT_GRAND_4K | I86_GDT_GRAND_32BIT | I86_GDT_GRAND_LIMITHI_MASK);
 
-	//À¯Àú¸ðµå µð½ºÅ©¸³ÅÍÀÇ ¼³Á¤
+	//ìœ ì €ëª¨ë“œ ë””ìŠ¤í¬ë¦½í„°ì˜ ì„¤ì •
 	gdt_set_descriptor(3, 0, 0xffffffff,
-		I86_GDT_DESC_READWRITE | I86_GDT_DESC_EXEC_CODE | I86_GDT_DESC_CODEDATA |
-		I86_GDT_DESC_MEMORY | I86_GDT_DESC_DPL, I86_GDT_GRAND_4K | I86_GDT_GRAND_32BIT |
-		I86_GDT_GRAND_LIMITHI_MASK);
-
-	//À¯Àú¸ðµå µ¥ÀÌÅÍ µð½ºÅ©¸³ÅÍÀÇ ¼³Á¤
-	gdt_set_descriptor(4, 0, 0xffffffff, I86_GDT_DESC_READWRITE | I86_GDT_DESC_CODEDATA | I86_GDT_DESC_MEMORY | I86_GDT_DESC_DPL,
+		I86_GDT_DESC_READWRITE | I86_GDT_DESC_EXEC_CODE | I86_GDT_DESC_CODEDATA | I86_GDT_DESC_MEMORY | I86_GDT_DESC_DPL, 
 		I86_GDT_GRAND_4K | I86_GDT_GRAND_32BIT | I86_GDT_GRAND_LIMITHI_MASK);
 
-	//GDTR ·¹Áö½ºÅÍ¿¡ GDT ·Îµå
+	//ìœ ì €ëª¨ë“œ ë°ì´í„° ë””ìŠ¤í¬ë¦½í„°ì˜ ì„¤ì •
+	gdt_set_descriptor(4, 0, 0xffffffff,
+		I86_GDT_DESC_READWRITE | I86_GDT_DESC_CODEDATA | I86_GDT_DESC_MEMORY | I86_GDT_DESC_DPL,
+		I86_GDT_GRAND_4K | I86_GDT_GRAND_32BIT | I86_GDT_GRAND_LIMITHI_MASK);
+
+	//GDTR ë ˆì§€ìŠ¤í„°ì— GDT ë¡œë“œ
 	InstallGDT();
 
 	return 0;

@@ -7,20 +7,20 @@
 #include "..\Kernel\DebugDisplay.h"
 #endif
 
-//ÀÎÅÍ·´Æ® µğ½ºÅ©¸³ÅÍ Å×ÀÌºí
+//ì¸í„°ëŸ½íŠ¸ ë””ìŠ¤í¬ë¦½í„° í…Œì´ë¸”
 static struct idt_descriptor	_idt [I86_MAX_INTERRUPTS];
 
-//CPUÀÇ IDTR ·¹Áö½ºÅÍ¸¦ ÃÊ±âÈ­ÇÏ´Âµ¥ µµ¿òÀ» ÁÖ´Â IDTR ±¸Á¶Ã¼
+//CPUì˜ IDTR ë ˆì§€ìŠ¤í„°ë¥¼ ì´ˆê¸°í™”í•˜ëŠ”ë° ë„ì›€ì„ ì£¼ëŠ” IDTR êµ¬ì¡°ì²´
 static struct idtr				_idtr;
 
-//IDTR ·¹Áö½ºÅÍ¿¡ IDTÀÇ ÁÖ¼Ò°ªÀ» ³Ö´Â´Ù.
+//IDTR ë ˆì§€ìŠ¤í„°ì— IDTì˜ ì£¼ì†Œê°’ì„ ë„£ëŠ”ë‹¤.
 static void IDTInstall() {
 #ifdef _MSC_VER
 	_asm lidt [_idtr]
 #endif
 }
 
-//´Ù·ê¼ö ÀÖ´Â ÇÚµé·¯°¡ Á¸ÀçÇÏÁö ¾ÊÀ»¶§ È£ÃâµÇ´Â ±âº» ÇÚµé·¯
+//ë‹¤ë£°ìˆ˜ ìˆëŠ” í•¸ë“¤ëŸ¬ê°€ ì¡´ì¬í•˜ì§€ ì•Šì„ë•Œ í˜¸ì¶œë˜ëŠ” ê¸°ë³¸ í•¸ë“¤ëŸ¬
 __declspec(naked) void InterrputDefaultHandler () {
 	
 	_asm {
@@ -37,7 +37,7 @@ __declspec(naked) void InterrputDefaultHandler () {
 	}
 }
 
-//i¹øÂ° ÀÎÅÍ·´Æ® µğ½ºÅ©¸³Æ®¸¦ ¾ò¾î¿Â´Ù.
+//ië²ˆì§¸ ì¸í„°ëŸ½íŠ¸ ë””ìŠ¤í¬ë¦½íŠ¸ë¥¼ ì–»ì–´ì˜¨ë‹¤.
 idt_descriptor* GetInterruptDescriptor(uint32_t i) {
 
 	if (i>I86_MAX_INTERRUPTS)
@@ -46,7 +46,7 @@ idt_descriptor* GetInterruptDescriptor(uint32_t i) {
 	return &_idt[i];
 }
 
-//ÀÎÅÍ·´Æ® ÇÚµé·¯ ¼³Ä¡
+//ì¸í„°ëŸ½íŠ¸ í•¸ë“¤ëŸ¬ ì„¤ì¹˜
 bool InstallInterrputHandler(uint32_t i, uint16_t flags, uint16_t sel, I86_IRQ_HANDLER irq) {
 
 	if (i>I86_MAX_INTERRUPTS)
@@ -55,7 +55,7 @@ bool InstallInterrputHandler(uint32_t i, uint16_t flags, uint16_t sel, I86_IRQ_H
 	if (!irq)
 		return false;
 
-	//ÀÎÅÍ·´Æ®ÀÇ º£ÀÌ½º ÁÖ¼Ò¸¦ ¾ò¾î¿Â´Ù.
+	//ì¸í„°ëŸ½íŠ¸ì˜ ë² ì´ìŠ¤ ì£¼ì†Œë¥¼ ì–»ì–´ì˜¨ë‹¤.
 	uint64_t		uiBase = (uint64_t)&(*irq);
 	
 	if ((flags & 0x0500) == 0x0500) {
@@ -64,7 +64,7 @@ bool InstallInterrputHandler(uint32_t i, uint16_t flags, uint16_t sel, I86_IRQ_H
 	}
 	else
 	{
-		//Æ÷¸Ë¿¡ ¸Â°Ô ÀÎÅÍ·´Æ® ÇÚµé·¯¿Í ÇÃ·¡±× °ªÀ» µğ½ºÅ©¸³ÅÍ¿¡ ¼¼ÆÃÇÑ´Ù.
+		//í¬ë§·ì— ë§ê²Œ ì¸í„°ëŸ½íŠ¸ í•¸ë“¤ëŸ¬ì™€ í”Œë˜ê·¸ ê°’ì„ ë””ìŠ¤í¬ë¦½í„°ì— ì„¸íŒ…í•œë‹¤.
 		_idt[i].baseLo = uint16_t(uiBase & 0xffff);
 		_idt[i].baseHi = uint16_t((uiBase >> 16) & 0xffff);
 		_idt[i].reserved = 0;
@@ -75,22 +75,23 @@ bool InstallInterrputHandler(uint32_t i, uint16_t flags, uint16_t sel, I86_IRQ_H
 	return	true;
 }
 
-//IDT¸¦ ÃÊ±âÈ­ÇÏ°í µğÆúÆ® ÇÚµé·¯¸¦ µî·ÏÇÑ´Ù
+//IDTë¥¼ ì´ˆê¸°í™”í•˜ê³  ë””í´íŠ¸ í•¸ë“¤ëŸ¬ë¥¼ ë“±ë¡í•œë‹¤
+//p.124~p.126 ì°¸ì¡°
 bool IDTInitialize(uint16_t codeSel) {
 
-	//IDTR ·¹Áö½ºÅÍ¿¡ ·ÎµåµÉ ±¸Á¶Ã¼ ÃÊ±âÈ­
+	//IDTR ë ˆì§€ìŠ¤í„°ì— ë¡œë“œë  êµ¬ì¡°ì²´ ì´ˆê¸°í™”
 	_idtr.limit = sizeof(struct idt_descriptor) * I86_MAX_INTERRUPTS - 1;
 	_idtr.base = (uint32_t)&_idt[0];
 
-	//NULL µğ½ºÅ©¸³ÅÍ
+	//NULL ë””ìŠ¤í¬ë¦½í„°
 	memset((void*)&_idt[0], 0, sizeof(idt_descriptor) * I86_MAX_INTERRUPTS - 1);
 
-	//µğÆúÆ® ÇÚµé·¯ µî·Ï
+	//ë””í´íŠ¸ í•¸ë“¤ëŸ¬ ë“±ë¡
 	for (int i = 0; i<I86_MAX_INTERRUPTS; i++)
 		InstallInterrputHandler(i, I86_IDT_DESC_PRESENT | I86_IDT_DESC_BIT32,
 			codeSel, (I86_IRQ_HANDLER)InterrputDefaultHandler);
 
-	//IDTR ·¹Áö½ºÅÍ¸¦ ¼Â¾÷ÇÑ´Ù
+	//IDTR ë ˆì§€ìŠ¤í„°ë¥¼ ì…‹ì—…í•œë‹¤
 	IDTInstall();
 
 	return true;
